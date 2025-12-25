@@ -1,6 +1,5 @@
-import 'dart:nativewrappers/_internal/vm/lib/ffi_native_type_patch.dart';
-
 import 'package:flutter/material.dart';
+
 import '../../data/mock_grocery_repository.dart';
 import '../../models/grocery.dart';
 import 'grocery_form.dart';
@@ -16,9 +15,10 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   GroceryTabs _selectedTab = GroceryTabs.grocery;
-  final _inputController = TextEditingController();
-  void onCreate() async {
-    Grocery? newGrocery = await Navigator.push<Grocery>(
+  final TextEditingController _inputController = TextEditingController();
+
+  Future<void> onCreate() async {
+    final Grocery? newGrocery = await Navigator.push<Grocery>(
       context,
       MaterialPageRoute(builder: (context) => const GroceryForm()),
     );
@@ -29,11 +29,19 @@ class _GroceryListState extends State<GroceryList> {
       });
     }
   }
-  @override
-  void dispose(){
-    super.dispose();
-    _inputController.dispose();
 
+  List<Grocery> get _filteredGroceries {
+    final query = _inputController.text.toLowerCase();
+    if (query.isEmpty) return dummyGroceryItems;
+    return dummyGroceryItems
+        .where((item) => item.name.toLowerCase().contains(query))
+        .toList();
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
   }
 
   Widget _buildGroceryList() {
@@ -49,11 +57,29 @@ class _GroceryListState extends State<GroceryList> {
   }
 
   Widget _buildSearch() {
-    return const Center(
-      child:TextField(
-        controller: _inputController,
-        decoration: const InputDecoration(label: Text('Enter to search'),),
-      )
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _inputController,
+            decoration: const InputDecoration(
+              labelText: 'Enter to search',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        Expanded(
+          child: _filteredGroceries.isEmpty
+              ? const Center(child: Text('No results found'))
+              : ListView.builder(
+                  itemCount: _filteredGroceries.length,
+                  itemBuilder: (context, index) =>
+                      GroceryTile(grocery: _filteredGroceries[index]),
+                ),
+        ),
+      ],
     );
   }
 
@@ -69,11 +95,9 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ],
       ),
-
       body: _selectedTab == GroceryTabs.grocery
           ? _buildGroceryList()
           : _buildSearch(),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedTab.index,
         selectedItemColor: Colors.red,
@@ -108,7 +132,10 @@ class GroceryTile extends StatelessWidget {
       leading: Container(
         width: 15,
         height: 15,
-        color: grocery.category.color,
+        decoration: BoxDecoration(
+          color: grocery.category.color,
+          borderRadius: BorderRadius.circular(4),
+        ),
       ),
       title: Text(grocery.name),
       trailing: Text(grocery.quantity.toString()),
