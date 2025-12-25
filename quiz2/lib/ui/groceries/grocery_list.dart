@@ -16,7 +16,6 @@ class GroceryList extends StatefulWidget {
 class _GroceryListState extends State<GroceryList> {
   GroceryTabs _selectedTab = GroceryTabs.grocery;
   final TextEditingController _inputController = TextEditingController();
-
   Future<void> onCreate() async {
     final Grocery? newGrocery = await Navigator.push<Grocery>(
       context,
@@ -30,13 +29,7 @@ class _GroceryListState extends State<GroceryList> {
     }
   }
 
-  List<Grocery> get _filteredGroceries {
-    final query = _inputController.text.toLowerCase();
-    if (query.isEmpty) return dummyGroceryItems;
-    return dummyGroceryItems
-        .where((item) => item.name.toLowerCase().contains(query))
-        .toList();
-  }
+
 
   @override
   void dispose() {
@@ -69,15 +62,6 @@ class _GroceryListState extends State<GroceryList> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-        ),
-        Expanded(
-          child: _filteredGroceries.isEmpty
-              ? const Center(child: Text('No results found'))
-              : ListView.builder(
-                  itemCount: _filteredGroceries.length,
-                  itemBuilder: (context, index) =>
-                      GroceryTile(grocery: _filteredGroceries[index]),
-                ),
         ),
       ],
     );
